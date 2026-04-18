@@ -37,7 +37,6 @@ Rules:
                 {"role": "user", "content": f"Extract car details from: \"{user_description}\""}
             ],
             response_format=ParsedCarDetails,
-            temperature=0.1,  # Low temperature for consistent extraction
         )
         
         parsed_details = response.choices[0].message.parsed
