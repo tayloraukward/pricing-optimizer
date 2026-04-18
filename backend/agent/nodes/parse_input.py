@@ -26,6 +26,7 @@ Rules:
 2. Normalize manufacturer and model names to proper case ("honda" → "Honda")
 3. Only include fields you're confident about
 4. For condition, map descriptions like "great shape" → "excellent", "some wear" → "fair"
+5. If condition is not mentioned, but mileage is greater than 10,000 miles, set condition to "used", otherwise ignore
 """
     
     try:
