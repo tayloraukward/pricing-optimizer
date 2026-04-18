@@ -5,6 +5,7 @@ from .check_comps import check_comps
 from .calculate_price import calculate_price
 from .validate_and_clamp import validate_and_clamp
 from .parsing_error_handler import parsing_error_handler
+from .insufficient_comps_handler import insufficient_comps_handler
 
 __all__ = [
     "parse_input",
@@ -14,4 +15,5 @@ __all__ = [
     "calculate_price",
     "validate_and_clamp",
     "parsing_error_handler",
+    "insufficient_comps_handler",
 ]
