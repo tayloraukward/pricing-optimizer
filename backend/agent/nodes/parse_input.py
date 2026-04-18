@@ -31,7 +31,7 @@ Rules:
     try:
         # Use OpenAI's structured outputs with Pydantic
         response = client.beta.chat.completions.parse(
-            model="gpt-4o-mini",  # or "gpt-4o" for better accuracy
+            model="gpt-5-nano",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Extract car details from: \"{user_description}\""}
