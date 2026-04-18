@@ -1,5 +1,6 @@
 from datetime import date
 from pydantic import BaseModel, Field
+from typing import Optional
 
 class Car(BaseModel):
     # Primary key
@@ -19,30 +20,30 @@ class Car(BaseModel):
     model: str
     
     # Vehicle specs
-    condition: str | None
-    cylinders: str | None
-    fuel: str | None
-    odometer: int | None  # Note: your DB uses "odometer", not "mileage"
-    title_status: str | None
-    transmission: str | None
-    vin: str | None
-    drive: str | None
-    size: str | None
-    type: str | None
-    paint_color: str | None
+    condition: Optional[str] = None
+    cylinders: Optional[str] = None
+    fuel: Optional[str] = None
+    odometer: Optional[int] = None  # Note: your DB uses "odometer", not "mileage"
+    title_status: Optional[str] = None
+    transmission: Optional[str] = None
+    vin: Optional[str] = None
+    drive: Optional[str] = None
+    size: Optional[str] = None
+    type: Optional[str] = None
+    paint_color: Optional[str] = None
     
     # Media
-    image_url: str | None
-    description: str | None
+    image_url: Optional[str] = None
+    description: Optional[str] = None
     
     # Location
-    county: str | None
+    county: Optional[str] = None
     state: str
-    lat: float | None
-    long: float | None
+    lat: Optional[float] = None
+    long: Optional[float] = None
     
     # Metadata
-    posting_date: date | None
+    posting_date: Optional[date] = None
     
     @property
     def age(self) -> int:

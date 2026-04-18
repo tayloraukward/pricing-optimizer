@@ -1,24 +1,18 @@
-from typing import TypedDict, Annotated
+from typing import TypedDict, Annotated, Optional, List
 from pydantic import BaseModel
 import operator
 from agent.model import ParsedCarDetails, Car, ValuationResult, CarValuationRequest
 
-# We need to track what stage we're in and any errors
 class AgentState(BaseModel):
-    # Input
     raw_input: CarValuationRequest
     
-    # Parsing stage
-    parsed_details: ParsedCarDetails | None = None
-    parsing_error: str | None = None
+    parsed_details: Optional[ParsedCarDetails] = None
+    parsing_error: Optional[str] = None
     
-    # Database lookup stage  
-    comparable_cars: list[Car] = []
-    lookup_error: str | None = None
+    comparable_cars: List[Car] = []
+    lookup_error: Optional[str] = None
     
-    # Final result
-    valuation: ValuationResult | None = None
+    valuation: Optional[ValuationResult] = None
     
-    # Control flow
     retry_count: int = 0
-    final_message: str | None = None  # For "Sorry no similar vehicles..." fallback
+    final_message: Optional[str] = None
