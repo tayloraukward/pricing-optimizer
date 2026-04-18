@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 class ParsedCarDetails(BaseModel):
     year: int = Field(..., ge=1900, le=2026, description="Model year of the vehicle")
@@ -7,7 +7,7 @@ class ParsedCarDetails(BaseModel):
     mileage: int | None = Field(None, ge=0, description="Odometer reading if mentioned")
     condition: str | None = Field(None, description="Overall condition (excellent, good, fair, poor)")
     
-   @field_validator("manufacturer", "model")
+    @field_validator("manufacturer", "model")
     @classmethod
     def normalize_text(cls, v: str) -> str:
         # Normalize "HONDA" → "Honda" for consistent database lookups
