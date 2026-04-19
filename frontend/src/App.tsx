@@ -1,23 +1,24 @@
 import { useState } from 'react';
 import './App.css';
 
-interface ParsedDetails {
-  year: number;
-  manufacturer: string;
-  model: string;
-  mileage?: number;
-  condition?: string;
+interface ValuationResult {
+  fair_price: number;
+  price_range_low: number;
+  price_range_high: number;
+  explanation: string;
+  comparable_count: number;
+  confidence: 'low' | 'medium' | 'high';
 }
 
-interface ParseResult {
+interface ValuationResponse {
   success: boolean;
-  parsed_details?: ParsedDetails;
+  valuation?: ValuationResult;
   error?: string;
 }
 
 function App() {
   const [description, setDescription] = useState('');
-  const [result, setResult] = useState<ParseResult | null>(null);
+  const [result, setResult] = useState<ValuationResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,39 +99,45 @@ function App() {
         {result && (
           <div className={`result-card ${result.success ? 'success' : 'error'}`}>
             <h3 className="result-title">
-              {result.success ? '✓ Details Extracted' : '✗ Parsing Failed'}
+              {result.success ? '✓ Valuation Complete' : '✗ Valuation Failed'}
             </h3>
             
-            {result.success && result.parsed_details ? (
+            {result.success && result.valuation ? (
               <div className="parsed-data">
-                <div className="field">
-                  <span className="field-label">Year</span>
-                  <span className="field-value">{result.parsed_details.year}</span>
+                <div className="field price-field">
+                  <span className="field-label">Fair Market Price</span>
+                  <span className="field-value price-value">
+                    ${result.valuation.fair_price.toLocaleString()}
+                  </span>
                 </div>
+                
                 <div className="field">
-                  <span className="field-label">Make</span>
-                  <span className="field-value">{result.parsed_details.manufacturer}</span>
+                  <span className="field-label">Price Range</span>
+                  <span className="field-value">
+                    ${result.valuation.price_range_low.toLocaleString()} - ${result.valuation.price_range_high.toLocaleString()}
+                  </span>
                 </div>
+                
                 <div className="field">
-                  <span className="field-label">Model</span>
-                  <span className="field-value">{result.parsed_details.model}</span>
+                  <span className="field-label">Confidence</span>
+                  <span className={`field-value confidence-${result.valuation.confidence}`}>
+                    {result.valuation.confidence.toUpperCase()}
+                  </span>
                 </div>
-                {result.parsed_details.mileage && (
-                  <div className="field">
-                    <span className="field-label">Mileage</span>
-                    <span className="field-value">
-                      {result.parsed_details.mileage.toLocaleString()} miles
-                    </span>
-                  </div>
-                )}
-                {result.parsed_details.condition && (
-                  <div className="field">
-                    <span className="field-label">Condition</span>
-                    <span className="field-value capitalize">
-                      {result.parsed_details.condition}
-                    </span>
-                  </div>
-                )}
+                
+                <div className="field">
+                  <span className="field-label">Comparables Used</span>
+                  <span className="field-value">
+                    {result.valuation.comparable_count} cars
+                  </span>
+                </div>
+                
+                <div className="field explanation-field">
+                  <span className="field-label">Analysis</span>
+                  <p className="field-value explanation-text">
+                    {result.valuation.explanation}
+                  </p>
+                </div>
               </div>
             ) : (
               <p className="error-message">{result.error}</p>
