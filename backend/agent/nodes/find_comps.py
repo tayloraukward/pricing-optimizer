@@ -87,3 +87,9 @@ def find_comps(state: AgentState) -> dict:
             "comparable_cars": [],
             "lookup_error": f"Database query failed: {str(e)}"
         }
+
+def check_comps(state: AgentState) -> str:
+    """Routing function: check if we have enough comparable cars"""
+    if len(state.comparable_cars) >= 3:
+        return "calculate_price"
+    return "insufficient_comps_handler"
