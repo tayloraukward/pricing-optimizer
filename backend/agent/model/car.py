@@ -1,5 +1,5 @@
-from datetime import date
-from pydantic import BaseModel, Field
+from datetime import date, datetime
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
 class Car(BaseModel):
@@ -44,6 +44,18 @@ class Car(BaseModel):
     
     # Metadata
     posting_date: Optional[date] = None
+    
+    @field_validator('posting_date', mode='before')
+    @classmethod
+    def parse_datetime(cls, v):
+        if v is None:
+            return None
+        if isinstance(v, str):
+            # Handle ISO datetime strings like '2021-04-23T18:41:15'
+            if 'T' in v:
+                return datetime.fromisoformat(v).date()
+            return date.fromisoformat(v)
+        return v
     
     @property
     def age(self) -> int:
