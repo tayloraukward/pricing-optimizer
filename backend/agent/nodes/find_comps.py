@@ -29,11 +29,11 @@ def find_comps(state: AgentState) -> dict:
         query = (
             supabase.table("cars")
             .select("*")
-            .eq("manufacturer", parsed.manufacturer)
-            .eq("model", parsed.model)
+            .ilike("manufacturer", parsed.manufacturer)  # case-insensitive
+            .ilike("model", f"{parsed.model}%")  # matches "Civic*" including "Civic LX"
             .gte("year", year_min)
             .lte("year", year_max)
-            .gt("price", 0)  # Must have a price listed
+            .gt("price", 0)
         )
         
         # Add mileage filter if target has mileage
@@ -42,7 +42,14 @@ def find_comps(state: AgentState) -> dict:
             mileage_max = parsed.mileage + 100000
             query = query.gte("odometer", mileage_min).lte("odometer", mileage_max)
         
+        logger.info(
+            f"Query: {parsed.manufacturer} {parsed.model}, "
+            f"years {year_min}-{year_max}, "
+            f"mileage {mileage_min if parsed.mileage else 'any'}-{mileage_max if parsed.mileage else 'any'}"
+        )
+
         response = query.limit(50).execute()
+        logger.info(f"Supabase returned {len(response.data or [])} raw records")
         
         if not response.data:
             return {
