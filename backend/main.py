@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from agent.model import AgentState, CarValuationRequest
 from agent.nodes.parse_input import parse_input
+import logging
 
 app = FastAPI(title="pricing-optimizer API")
 
@@ -13,6 +14,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 @app.get("/health")
 def health():
