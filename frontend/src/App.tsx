@@ -31,7 +31,7 @@ function App() {
       // Use environment variable in production, localhost for development
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
       
-      const response = await fetch(`${API_URL}/test-parse`, {
+      const response = await fetch(`${API_URL}/get-valuation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description }),

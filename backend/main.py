@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from agent.model import AgentState, CarValuationRequest
 from agent.nodes.parse_input import parse_input
+from agent.fetch_valuation_graph import compiled_graph as fetch_valuation_graph
 import logging
 
 app = FastAPI(title="pricing-optimizer API")
@@ -18,11 +19,6 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
 
 @app.post("/test-parse")
 def test_parse(request: CarValuationRequest):
@@ -42,4 +38,20 @@ def test_parse(request: CarValuationRequest):
     return {
         "success": True,
         "parsed_details": result["parsed_details"].model_dump()
+    }
+
+@app.post("/get-valuation")
+def get_valuation(request: CarValuationRequest):
+    state = AgentState(raw_input=request)
+    result = fetch_valuation_graph.invoke(state)
+    
+    if result.get("final_message"):
+        return {
+            "success": False,
+            "error": result["final_message"]
+        }
+    
+    return {
+        "success": True,
+        "valuation": result["valuation"].model_dump() if result["valuation"] else None
     }
