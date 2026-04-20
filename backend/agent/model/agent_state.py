@@ -5,6 +5,7 @@ from agent.model import ParsedCarDetails, Car, ValuationResult, CarValuationRequ
 
 class AgentState(BaseModel):
     raw_input: CarValuationRequest
+    session_id: Optional[str] = None  # For event correlation
     
     parsed_details: Optional[ParsedCarDetails] = None
     parsing_error: Optional[str] = None

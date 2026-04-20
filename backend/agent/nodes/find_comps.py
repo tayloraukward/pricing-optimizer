@@ -2,6 +2,7 @@ import os
 from typing import Optional
 from agent.model import AgentState, Car, ParsedCarDetails
 from agent.dal.cars_db import get_supabase_client
+from agent.events import publish_event_sync
 import logging
 import traceback
 
@@ -11,6 +12,15 @@ def find_comps(state: AgentState) -> dict:
     """Query Supabase for comparable cars within ±3 years, same make/model, within 100k miles"""
     
     logger.info(f"find_comps input state: {state.model_dump_json()}")
+    
+    # Publish start event
+    if state.session_id:
+        logger.info(f"[FIND_COMPS] Publishing start event for session {state.session_id[:8]}...")
+        publish_event_sync(
+            state.session_id, 
+            "find_comps", 
+            f"Finding comparable cars for {state.parsed_details.year} {state.parsed_details.manufacturer} {state.parsed_details.model}..."
+        )
 
     if not state.parsed_details:
         return {
@@ -76,6 +86,15 @@ def find_comps(state: AgentState) -> dict:
         logger.info(
             f"Found {len(comparable_cars)} comps for {parsed.year} {parsed.manufacturer} {parsed.model}"
         )
+        
+        # Publish completion event
+        if state.session_id:
+            publish_event_sync(
+                state.session_id,
+                "find_comps",
+                f"Found {len(comparable_cars)} comparable cars in database"
+            )
+        
         return {
             "comparable_cars": comparable_cars,
             "lookup_error": None

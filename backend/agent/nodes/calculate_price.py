@@ -1,6 +1,7 @@
 import os
 import logging
 from agent.model import AgentState, ValuationResult, Car
+from agent.events import publish_event_sync
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,14 @@ def calculate_price(state: AgentState) -> dict:
     comps = state.comparable_cars
 
     logger.info(f"Calculating price for: {parsed.year} {parsed.manufacturer} {parsed.model}")
+    
+    # Publish start event
+    if state.session_id:
+        publish_event_sync(
+            state.session_id,
+            "calculate_price",
+            f"Analyzing comparable cars to determine fair market value..."
+        )
 
     # Build the system prompt for LLM analysis
     system_prompt = _build_pricing_prompt(parsed, comps)
@@ -34,7 +43,7 @@ def calculate_price(state: AgentState) -> dict:
     try:
         # Use OpenAI structured outputs with Pydantic
         response = client.beta.chat.completions.parse(
-            model="gpt-5-nano",
+            model="gpt-5.1",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": "Analyze the comparable cars and provide a fair market price for the target vehicle."}
@@ -48,6 +57,14 @@ def calculate_price(state: AgentState) -> dict:
         logger.info(f"Price range: ${valuation.price_range_low:,.2f} - ${valuation.price_range_high:,.2f}")
         logger.info(f"Confidence: {valuation.confidence}, Comps used: {valuation.comparable_count}")
         logger.debug(f"Explanation: {valuation.explanation}")
+        
+        # Publish completion event
+        if state.session_id:
+            publish_event_sync(
+                state.session_id,
+                "calculate_price",
+                f"Calculated fair market value: ${valuation.fair_price:,.0f}"
+            )
 
         return {
             "valuation": valuation,

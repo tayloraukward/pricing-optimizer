@@ -22,6 +22,7 @@ function App() {
   const [description, setDescription] = useState('');
   const [result, setResult] = useState<ValuationResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,15 +30,38 @@ function App() {
 
     setLoading(true);
     setResult(null);
+    setProgress('Initializing...');
+
+    // Generate unique session ID for this valuation
+    const sessionId = crypto.randomUUID();
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
+    // Start event stream FIRST (before processing)
+    const eventSource = new EventSource(`${API_URL}/events/${sessionId}`);
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      if (data.error) {
+        setProgress(`Error: ${data.message}`);
+      } else if (data.step === 'complete') {
+        setProgress('Complete!');
+      } else {
+        setProgress(data.message);
+      }
+    };
+
+    eventSource.onerror = () => {
+      console.error('Event stream error');
+      eventSource.close();
+    };
 
     try {
-      // Use environment variable in production, localhost for development
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-      
+      // Call existing API with session_id
       const response = await fetch(`${API_URL}/get-valuation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description }),
+        body: JSON.stringify({ description, session_id: sessionId }),
       });
 
       const data = await response.json();
@@ -49,6 +73,9 @@ function App() {
       });
     } finally {
       setLoading(false);
+      // Keep showing progress briefly before clearing
+      setTimeout(() => setProgress(''), 1000);
+      eventSource.close();
     }
   };
 
@@ -104,6 +131,14 @@ function App() {
                     'Get Valuation'
                   )}
                 </button>
+
+                {/* Real-time Progress Indicator */}
+                {loading && progress && (
+                  <div className="mt-6 flex items-center gap-3 text-foreground-muted">
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                    <span className="text-sm font-medium">{progress}</span>
+                  </div>
+                )}
               </form>
             </GlassCard>
 

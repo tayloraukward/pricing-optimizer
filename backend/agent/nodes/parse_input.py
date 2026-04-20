@@ -1,6 +1,10 @@
 import os
+import logging
 from openai import OpenAI
 from agent.model import AgentState, ParsedCarDetails
+from agent.events import publish_event_sync
+
+logger = logging.getLogger(__name__)
 
 # Initialize OpenAI client
 # In production, use environment variable: os.getenv("OPENAI_API_KEY")
@@ -11,6 +15,15 @@ def parse_input(state: AgentState) -> dict:
     """Extract structured data from raw text using LLM"""
     
     user_description = state.raw_input.description
+    
+    # Publish start event
+    if state.session_id:
+        logger.info(f"[PARSE] Publishing start event for session {state.session_id[:8]}...")
+        publish_event_sync(
+            state.session_id,
+            "parse_input",
+            "Reading your vehicle description..."
+        )
     
     system_prompt = """You are a car detail extraction specialist. 
     
@@ -32,7 +45,7 @@ Rules:
     try:
         # Use OpenAI's structured outputs with Pydantic
         response = client.beta.chat.completions.parse(
-            model="gpt-5-nano",
+            model="gpt-5.1",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Extract car details from: \"{user_description}\""}
@@ -48,6 +61,14 @@ Rules:
                 "parsed_details": None,
                 "parsing_error": f"Could not extract required fields (year: {parsed_details.year}, manufacturer: {parsed_details.manufacturer}, model: {parsed_details.model})"
             }
+        
+        # Publish completion event
+        if state.session_id:
+            publish_event_sync(
+                state.session_id,
+                "parse_input",
+                f"Found {parsed_details.year} {parsed_details.manufacturer} {parsed_details.model}"
+            )
         
         return {
             "parsed_details": parsed_details,
