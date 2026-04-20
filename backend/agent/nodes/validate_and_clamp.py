@@ -99,5 +99,5 @@ def validate_and_clamp(state: AgentState) -> dict:
 
     return {
         "valuation": valuation,
-        "final_message": None  # Success - no error message needed
+        "final_message": None 
     }

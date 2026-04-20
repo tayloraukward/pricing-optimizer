@@ -14,9 +14,13 @@
     "serve": "^14.2.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss7-compat": "^2.2.17",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "^3.4.1",
     "typescript": "~5.7.2",
     "vite": "^6.0.3"
   }
