@@ -75,9 +75,9 @@ def validate_and_clamp(state: AgentState) -> dict:
     # Guardrail 4: Verify comparable_count matches actual comps
     actual_comps = len(state.comparable_cars)
     if valuation.comparable_count != actual_comps:
-        logger.warning(f"Guardrail triggered: comparable_count mismatch - reported {valuation.comparable_count}, actual {actual_comps}")
+        original_count = valuation.comparable_count
+        logger.warning(f"Guardrail triggered: comparable_count mismatch - reported {original_count}, actual {actual_comps}")
         valuation.comparable_count = actual_comps
-        guardrails_triggered.append(f"comparable_count corrected from {valuation.comparable_count} to {actual_comps}")
         adjustments_made.append("comparable_count_correction")
 
     # Guardrail 5: Lower confidence if guardrails were triggered
@@ -96,12 +96,6 @@ def validate_and_clamp(state: AgentState) -> dict:
 
     logger.info(f"Final validated price: ${valuation.fair_price:,.2f} (confidence: {valuation.confidence})")
     logger.debug(f"Adjustments made: {adjustments_made}")
-
-    # Append guardrail notes to explanation if adjustments were made
-    if guardrails_triggered:
-        guardrail_note = " Note: Price validation applied adjustments: " + "; ".join(guardrails_triggered)
-        valuation.explanation = valuation.explanation + guardrail_note
-        logger.debug(f"Updated explanation: {valuation.explanation}")
 
     return {
         "valuation": valuation,
