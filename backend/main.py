@@ -46,26 +46,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-@app.post("/test-parse")
-def test_parse(request: CarValuationRequest):
-    """Test endpoint: Parse car description and return structured details"""
-    # Create initial state
-    state = AgentState(raw_input=request)
-    
-    # Run parse_input node
-    result = parse_input(state)
-    
-    if result.get("parsing_error"):
-        return {
-            "success": False,
-            "error": result["parsing_error"]
-        }
-    
-    return {
-        "success": True,
-        "parsed_details": result["parsed_details"].model_dump()
-    }
-
 @app.get("/events/{session_id}")
 async def event_stream(session_id: str):
     """Stream real-time progress events for a valuation session."""
