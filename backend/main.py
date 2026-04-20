@@ -6,9 +6,16 @@ from agent.nodes.parse_input import parse_input
 from agent.fetch_valuation_graph import compiled_graph as fetch_valuation_graph
 from agent.events import get_events, get_or_create_queue, clear_session, session_exists, set_main_loop
 import logging
+import sys
 import json
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 logger = logging.getLogger(__name__)
 
