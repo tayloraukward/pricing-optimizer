@@ -84,16 +84,16 @@ function App() {
       <AmbientBackground />
       
       <div className="relative z-10">
-        <header className="border-b border-white/6 backdrop-blur-sm bg-white/[0.02]">
+        <header className="sticky top-0 z-50 border-b border-white/6 backdrop-blur-sm bg-white/[0.02]">
           <div className="container mx-auto px-6 py-6">
             <h1 className="text-2xl font-semibold text-white tracking-tight">Car Valuation Agent</h1>
           </div>
         </header>
 
-        <main className="container mx-auto px-6 py-24">
+        <main className="container mx-auto px-6 py-12">
           <div className="max-w-2xl mx-auto">
             {/* Hero Section */}
-            <div className="text-center mb-16 animate-fade-up">
+            <div className="text-center mb-8 animate-fade-up">
               <h1 className="text-6xl md:text-7xl font-bold text-gradient mb-8 leading-tight">
                 Get Your Car's<br />True Market Value
               </h1>
