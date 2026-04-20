@@ -43,7 +43,7 @@ def calculate_price(state: AgentState) -> dict:
     try:
         # Use OpenAI structured outputs with Pydantic
         response = client.beta.chat.completions.parse(
-            model="gpt-5.1",
+            model="gpt-5-nano",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": "Analyze the comparable cars and provide a fair market price for the target vehicle."}
@@ -104,17 +104,16 @@ TARGET VEHICLE TO PRICE:
             description = description[:200] + "..."
 
         comp_detail = f"""
-Car #{i}:
-  - Year: {car.year}
-  - Price: {price_str}
-  - Mileage: {car.odometer if car.odometer else 'Not specified'}
-  - Condition: {car.condition if car.condition else 'Not specified'}
-  - Location: {car.state}
-  - Fuel: {car.fuel if car.fuel else 'Not specified'}
-  - Transmission: {car.transmission if car.transmission else 'Not specified'}
-  - Title Status: {car.title_status if car.title_status else 'Not specified'}
-  - Posting Date: {car.posting_date if car.posting_date else 'Not specified'}
-  - Description: {description if description else 'Not available'}
+- Year: {car.year}
+  Price: {price_str}
+  Mileage: {car.odometer if car.odometer else 'Not specified'}
+  Condition: {car.condition if car.condition else 'Not specified'}
+  Location: {car.state}
+  Fuel: {car.fuel if car.fuel else 'Not specified'}
+  Transmission: {car.transmission if car.transmission else 'Not specified'}
+  Title Status: {car.title_status if car.title_status else 'Not specified'}
+  Posting Date: {car.posting_date if car.posting_date else 'Not specified'}
+  Description: {description if description else 'Not available'}
 """
         comps_details += comp_detail
 
@@ -153,7 +152,7 @@ ANALYSIS INSTRUCTIONS:
    - MEDIUM: Moderate comps (5-9), some variance in specs or prices
    - LOW: Few comps (3-4), significant variance, old listings, outliers present
 
-5. Provide a clear explanation of your reasoning, citing specific comps that influenced your decision.
+5. Provide a clear explanation of your reasoning. When citing comparable cars, describe them by their characteristics (e.g., "a 2017 Civic with 38k miles listed at $19,991" or "similar lower-mileage 2018s in the $21-22k range") - NEVER use internal IDs, numbers, or references like #1, #17, Car #4, etc. The user does not see these internal identifiers.
 
 OUTPUT REQUIREMENTS:
 - fair_price: The single best estimate of fair market value (be specific, not rounded)
