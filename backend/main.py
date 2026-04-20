@@ -41,11 +41,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
 @app.get("/events/{session_id}")
 async def event_stream(session_id: str):
     """Stream real-time progress events for a valuation session."""
