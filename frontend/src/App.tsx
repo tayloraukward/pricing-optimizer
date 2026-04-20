@@ -172,32 +172,12 @@ function App() {
                     </div>
                     
                     {/* Other Details */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-background-elevated rounded-xl border border-white/6">
-                        <div className="text-sm font-mono tracking-widest uppercase text-foreground-subtle mb-1">
-                          Price Range
-                        </div>
-                        <div className="text-lg font-semibold text-foreground">
-                          ${result.valuation.price_range_low.toLocaleString()} - ${result.valuation.price_range_high.toLocaleString()}
-                        </div>
+                    <div className="p-4 bg-background-elevated rounded-xl border border-white/6">
+                      <div className="text-sm font-mono tracking-widest uppercase text-foreground-subtle mb-1">
+                        Price Range
                       </div>
-                      
-                      <div className="p-4 bg-background-elevated rounded-xl border border-white/6">
-                        <div className="text-sm font-mono tracking-widest uppercase text-foreground-subtle mb-1">
-                          Confidence
-                        </div>
-                        <div className={`confidence-badge confidence-${result.valuation.confidence}`}>
-                          {result.valuation.confidence.toUpperCase()}
-                        </div>
-                      </div>
-                      
-                      <div className="p-4 bg-background-elevated rounded-xl border border-white/6">
-                        <div className="text-sm font-mono tracking-widest uppercase text-foreground-subtle mb-1">
-                          Comparables Used
-                        </div>
-                        <div className="text-lg font-semibold text-foreground">
-                          {result.valuation.comparable_count} cars
-                        </div>
+                      <div className="text-lg font-semibold text-foreground">
+                        ${result.valuation.price_range_low.toLocaleString()} - ${result.valuation.price_range_high.toLocaleString()}
                       </div>
                     </div>
                     
