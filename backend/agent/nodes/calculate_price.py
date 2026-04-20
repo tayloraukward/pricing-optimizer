@@ -91,6 +91,13 @@ TARGET VEHICLE TO PRICE:
 - Model: {parsed.model}
 - Mileage: {parsed.mileage if parsed.mileage else 'Not specified'}
 - Condition: {parsed.condition if parsed.condition else 'Not specified'}
+- Fuel: {parsed.fuel if parsed.fuel else 'Not specified'}
+- Transmission: {parsed.transmission if parsed.transmission else 'Not specified'}
+- Drive: {parsed.drive if parsed.drive else 'Not specified'}
+- Cylinders: {parsed.cylinders if parsed.cylinders else 'Not specified'}
+- Title Status: {parsed.title_status if parsed.title_status else 'Not specified'}
+- Paint Color: {parsed.paint_color if parsed.paint_color else 'Not specified'}
+- Features/Modifications: {parsed.description if parsed.description else 'None specified'}
 """
 
     # Format comparable cars
