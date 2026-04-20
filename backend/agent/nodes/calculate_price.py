@@ -1,13 +1,9 @@
-import os
 import logging
 from agent.model import AgentState, ValuationResult, Car
 from agent.events import publish_event_sync
-from openai import OpenAI
+from agent.llm import parse_structured
 
 logger = logging.getLogger(__name__)
-
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def calculate_price(state: AgentState) -> dict:
@@ -41,17 +37,12 @@ def calculate_price(state: AgentState) -> dict:
     system_prompt = _build_pricing_prompt(parsed, comps)
 
     try:
-        # Use OpenAI structured outputs with Pydantic
-        response = client.beta.chat.completions.parse(
-            model="gpt-5-nano",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": "Analyze the comparable cars and provide a fair market price for the target vehicle."}
-            ],
+        # Use OpenAI facade for structured parsing
+        valuation = parse_structured(
+            system_prompt=system_prompt,
+            user_content="Analyze the comparable cars and provide a fair market price for the target vehicle.",
             response_format=ValuationResult,
         )
-
-        valuation = response.choices[0].message.parsed
 
         logger.info(f"Price calculation successful: ${valuation.fair_price:,.2f}")
         logger.info(f"Price range: ${valuation.price_range_low:,.2f} - ${valuation.price_range_high:,.2f}")
@@ -71,6 +62,12 @@ def calculate_price(state: AgentState) -> dict:
             "lookup_error": None
         }
 
+    except ValueError as e:
+        logger.error(f"Price calculation validation failed: {e}")
+        return {
+            "valuation": None,
+            "lookup_error": f"Price calculation failed: {str(e)}"
+        }
     except Exception as e:
         logger.error(f"Price calculation failed: {e}", exc_info=True)
         return {

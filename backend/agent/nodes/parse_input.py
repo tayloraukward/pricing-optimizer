@@ -1,14 +1,9 @@
-import os
 import logging
-from openai import OpenAI
 from agent.model import AgentState, ParsedCarDetails
 from agent.events import publish_event_sync
+from agent.llm import parse_structured
 
 logger = logging.getLogger(__name__)
-
-# Initialize OpenAI client
-# In production, use environment variable: os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 def parse_input(state: AgentState) -> dict:
@@ -78,17 +73,12 @@ def parse_input(state: AgentState) -> dict:
     """
     
     try:
-        # Use OpenAI's structured outputs with Pydantic
-        response = client.beta.chat.completions.parse(
-            model="gpt-5-nano",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Extract car details from: \"{user_description}\""}
-            ],
+        # Use OpenAI facade for structured parsing
+        parsed_details = parse_structured(
+            system_prompt=system_prompt,
+            user_content=f"Extract car details from: \"{user_description}\"",
             response_format=ParsedCarDetails,
         )
-        
-        parsed_details = response.choices[0].message.parsed
         
         # Validate required fields are present
         if parsed_details.year is None or parsed_details.manufacturer is None or parsed_details.model is None:
@@ -110,13 +100,16 @@ def parse_input(state: AgentState) -> dict:
             "parsing_error": None
         }
         
-    except Exception as e:
-        # Handle API errors, parsing failures, or validation errors
-        error_msg = str(e)
-        if "Refusal" in error_msg:
-            error_msg = "The model refused to parse this input"
-        
-        return {    
+    except ValueError as e:
+        # Handle model refusal or validation errors
+        return {
             "parsed_details": None,
-            "parsing_error": f"Parsing failed: {error_msg}"
+            "parsing_error": f"Parsing failed: {str(e)}"
+        }
+    except Exception as e:
+        # Handle other API errors
+        logger.error(f"Unexpected error in parse_input: {e}")
+        return {
+            "parsed_details": None,
+            "parsing_error": f"Parsing failed: {str(e)}"
         }
