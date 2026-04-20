@@ -25,27 +25,62 @@ def parse_input(state: AgentState) -> dict:
             "Reading your vehicle description..."
         )
     
-    system_prompt = """You are a car detail extraction specialist. 
-    
-Given a user's free-text description of a vehicle, extract the following structured information:
-- year: The model year (1900-2026)
-- manufacturer: The car make/brand (e.g., Honda, Toyota, Ford)
-- model: The specific model name (e.g., Civic, Camry, F-150)
-- mileage: The odometer reading in miles (if mentioned)
-- condition: Overall condition - one of: excellent, good, fair, poor, new (if mentioned)
+    system_prompt = """You are a car detail extraction specialist.
 
-Rules:
-1. If year, manufacturer, or model cannot be determined, the extraction fails
-2. Normalize manufacturer and model names to proper case ("honda" → "Honda")
-3. Only include fields you're confident about
-4. For condition, map descriptions like "great shape" → "excellent", "some wear" → "fair"
-5. If condition is not mentioned, but mileage is greater than 10,000 miles, set condition to "used", otherwise ignore
-"""
+    Given a user's free-text description of a vehicle, extract the following structured information:
+
+    REQUIRED FIELDS (must be determined or extraction fails):
+    - year: The model year (1900-2026)
+    - manufacturer: The car make/brand (e.g., Honda, Toyota, Ford) - lowercase
+    - model: The specific model name ONLY (e.g., civic, camry, tundra, f-150). DO NOT include trim levels. - lowercase
+
+    OPTIONAL FIELDS - ONLY extract if explicitly mentioned in the description. DO NOT GUESS:
+    - odometer: The odometer reading in miles (number only, if mentioned)
+    - condition: Overall condition - one of: excellent, good, fair, poor, new
+    - fuel: Fuel type - one of: gas, diesel, hybrid, electric (if mentioned)
+    - transmission: Transmission type - one of: automatic, manual (if mentioned)
+    - drive: Drive type - one of: 4wd, fwd, rwd, awd (if mentioned)
+    - cylinders: Engine cylinders as string - e.g., "4", "6", "8" (if mentioned)
+    - title_status: Title status - one of: clean, salvage, rebuilt, lien, missing (if mentioned)
+    - paint_color: Exterior paint color (e.g., "red", "black", "silver") - lowercase (if mentioned)
+    - description: Include ALL additional vehicle features, modifications, and details not captured in other fields. This is CRITICAL for accurate valuation. Examples:
+      * Aftermarket modifications: "35\" Nitto Ridge Grapplers tires, Fuel Vector Wheels, 3\" leveling kit"
+      * Premium features: "leather seats, sunroof, navigation, premium audio"
+      * Recent maintenance: "new brakes, fresh oil change, new tires"
+      * Known issues: "minor dent on rear bumper, needs new tires"
+      * Other details: "smoker-free, garage kept, single owner"
+
+    CRITICAL RULES FOR MODEL EXTRACTION:
+    1. Extract ONLY the base model name, NEVER include trim levels (SR5, TRD, EX, LX, Limited, Platinum, etc.)
+    2. Examples of correct extraction:
+    - "Tundra SR5" → model: "tundra"
+    - "Civic EX" → model: "civic"
+    - "F-150 Limited" → model: "f-150"
+    - "Camry TRD" → model: "camry"
+    - "Tundra SR5 with leveling kit" → model: "tundra"
+    3. Trim levels to IGNORE: SR5, TRD, Limited, Platinum, EX, LX, Lariat, XLT, Sport, Touring, etc.
+
+    CRITICAL RULES FOR OPTIONAL FIELDS:
+    1. ONLY extract a field if the user EXPLICITLY mentions it
+    2. Examples:
+    - "2018 Tundra, 45k miles, 4x4" → extract: odometer=45000, drive=4wd
+    - "2018 Tundra with leather seats" → do NOT extract fuel, transmission, drive, etc.
+    - "2018 Tundra, clean title, automatic" → extract: title_status=clean, transmission=automatic
+    3. DO NOT infer or guess any values - if not mentioned, leave as null
+    4. Normalize all string values to lowercase
+
+    General Rules:
+    1. If year, manufacturer, or model cannot be determined, the extraction fails
+    2. Normalize manufacturer and model to lowercase ("Honda" → "honda")
+    3. Only include optional fields if explicitly mentioned with high confidence
+    4. For condition, map descriptions like "great shape" → "excellent", "some wear" → "fair"
+    5. If condition is not mentioned, but odometer is greater than 10,000, set condition to "good" (standard used car), otherwise null
+    """
     
     try:
         # Use OpenAI's structured outputs with Pydantic
         response = client.beta.chat.completions.parse(
-            model="gpt-5.1",
+            model="gpt-5-nano",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Extract car details from: \"{user_description}\""}
