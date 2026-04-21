@@ -1,11 +1,33 @@
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
+
 class ParsedCarDetails(BaseModel):
-    # Required core fields
-    year: int = Field(..., ge=1900, le=2026, description="Model year of the vehicle")
-    manufacturer: str = Field(..., min_length=1, description="Car make/brand")
-    model: str = Field(..., min_length=1, description="Car model name (base model only, no trim)")
+    """Parsed vehicle details from user input, with support for refusing non-vehicle input."""
+    
+    # Vehicle validation flag
+    is_vehicle: bool = Field(
+        True, 
+        description="Whether the input is actually a vehicle description. Set to False for API keys, code, random text, etc."
+    )
+    refusal_reason: Optional[str] = Field(
+        None, 
+        description="Explanation of why input was refused if is_vehicle is False"
+    )
+    
+    # Core identification fields - required only if is_vehicle is True
+    year: Optional[int] = Field(
+        None, ge=1900, le=2026, 
+        description="Model year of the vehicle (null if not a vehicle or cannot determine)"
+    )
+    manufacturer: Optional[str] = Field(
+        None, min_length=1, 
+        description="Car make/brand (null if not a vehicle or cannot determine)"
+    )
+    model: Optional[str] = Field(
+        None, min_length=1, 
+        description="Car model name, base model only no trim (null if not a vehicle or cannot determine)"
+    )
     
     # Optional fields - ONLY extract if explicitly mentioned in the description
     odometer: Optional[int] = Field(None, ge=0, description="Odometer reading in miles if mentioned")
@@ -18,7 +40,10 @@ class ParsedCarDetails(BaseModel):
     paint_color: Optional[str] = Field(None, description="Exterior paint color")
     
     # Description for additional features not captured in structured fields
-    description: Optional[str] = Field(None, description="Additional vehicle features, modifications, and details (e.g., aftermarket wheels, leveling kit, premium features, recent maintenance, etc.)")
+    description: Optional[str] = Field(
+        None, 
+        description="Additional vehicle features, modifications, and details"
+    )
     
     @field_validator("manufacturer", "model", "fuel", "transmission", "drive", "title_status", "paint_color")
     @classmethod

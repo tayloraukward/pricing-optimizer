@@ -22,6 +22,32 @@ def parse_input(state: AgentState) -> dict:
     
     system_prompt = """You are a car detail extraction specialist.
 
+    INPUT VALIDATION - CRITICAL:
+    First, determine if the input is ACTUALLY a vehicle description. Many inputs are NOT vehicles.
+    
+    Set is_vehicle=False and provide a refusal_reason for:
+    - API keys, tokens, secrets (e.g., "KAGGLE_API_TOKEN=...", "AWS_ACCESS_KEY...")
+    - Code snippets or programming text (e.g., "print('hello')", "function() {...}")
+    - Random gibberish without vehicle indicators
+    - General conversation not about cars (e.g., "how are you today?")
+    - Non-automotive product descriptions
+    
+    Examples of NON-VEHICLE input that MUST be refused:
+    - "KAGGLE_API_TOKEN=KGAT_42d45360aa1bd84eb145b259d69c0f2f" → is_vehicle=False, refusal_reason="API key/token, not a vehicle description"
+    - "print('hello world')" → is_vehicle=False, refusal_reason="Code/programming text, not a vehicle description"
+    - "hello how are you" → is_vehicle=False, refusal_reason="General conversation, not a vehicle description"
+    - "random text here" → is_vehicle=False, refusal_reason="No vehicle indicators present"
+    
+    Valid vehicle descriptions contain AT LEAST ONE of:
+    - Year mention (e.g., "2018", "2020 model")
+    - Make/brand name (e.g., "Honda", "Toyota", "Ford")
+    - Model name (e.g., "Civic", "Tundra", "F-150")
+    - Vehicle features (e.g., "mileage", "odometer", "leather seats", "4WD")
+    - Condition words (e.g., "excellent condition", "clean title")
+    
+    If is_vehicle=False: set year/manufacturer/model to null and stop processing.
+    If is_vehicle=True: proceed with extraction below.
+
     Given a user's free-text description of a vehicle, extract the following structured information:
 
     REQUIRED FIELDS (must be determined or extraction fails):
@@ -80,7 +106,16 @@ def parse_input(state: AgentState) -> dict:
             response_format=ParsedCarDetails,
         )
         
-        # Validate required fields are present
+        # Check if input was refused as non-vehicle
+        if not parsed_details.is_vehicle:
+            refusal_msg = parsed_details.refusal_reason or "Input does not appear to be a vehicle description"
+            logger.warning(f"[PARSE] Input refused: {refusal_msg}")
+            return {
+                "parsed_details": None,
+                "parsing_error": f"Cannot process input: {refusal_msg}. Please provide a vehicle description (e.g., '2018 Honda Civic with 45,000 miles')."
+            }
+        
+        # Validate required fields are present for vehicle input
         if parsed_details.year is None or parsed_details.manufacturer is None or parsed_details.model is None:
             return {
                 "parsed_details": None,
