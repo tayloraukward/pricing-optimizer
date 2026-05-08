@@ -1,10 +1,20 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from agent.model import AgentState, CarValuationRequest
+from typing import Dict, Any, Optional, List
+
+from agent.model import AgentState, CarValuationRequest, SavedValuation
 from agent.nodes.parse_input import parse_input
 from agent.fetch_valuation_graph import compiled_graph as fetch_valuation_graph
 from agent.events import get_events, get_or_create_queue, clear_session, session_exists, set_main_loop
+from agent.auth import require_auth_dependency
+from agent.dal.saved_valuations_db import (
+    get_saved_valuations_for_user,
+    get_saved_valuation_by_id,
+    save_valuation,
+    delete_saved_valuation,
+)
+
 import logging
 import sys
 import json
@@ -138,3 +148,121 @@ async def publish_completion_event(session_id: str, result: dict):
             result.get("final_message", "Unknown error"),
             {"error": result.get("final_message")}
         )
+
+
+# =============================================================================
+# Saved Valuations Endpoints (Protected by Authentication)
+# =============================================================================
+
+@app.get("/valuations")
+async def get_user_valuations(user: dict = Depends(require_auth_dependency)):
+    """
+    Get all saved valuations for the authenticated user.
+    Requires: Authorization: Bearer <supabase_token>
+    """
+    user_id = user["id"]
+    logger.info(f"[API] Fetching valuations for user {user_id[:8]}...")
+    
+    valuations = get_saved_valuations_for_user(user_id)
+    
+    return {
+        "success": True,
+        "valuations": [v.model_dump() for v in valuations]
+    }
+
+
+@app.get("/valuations/{valuation_id}")
+async def get_single_valuation(
+    valuation_id: str, 
+    user: dict = Depends(require_auth_dependency)
+):
+    """
+    Get a specific saved valuation by ID.
+    User can only access their own valuations (enforced by RLS).
+    """
+    user_id = user["id"]
+    logger.info(f"[API] Fetching valuation {valuation_id[:8]} for user {user_id[:8]}...")
+    
+    valuation = get_saved_valuation_by_id(valuation_id, user_id)
+    
+    if not valuation:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Valuation not found")
+    
+    return {
+        "success": True,
+        "valuation": valuation.model_dump()
+    }
+
+
+@app.post("/valuations/save")
+async def create_saved_valuation(
+    data: dict = Body(...),
+    user: dict = Depends(require_auth_dependency)
+):
+    """
+    Save a new valuation.
+    
+    Body:
+        - title: str (required)
+        - parsed_car: dict (required) - parsed vehicle details
+        - valuation_result: dict (required) - valuation result
+    """
+    user_id = user["id"]
+    logger.info(f"[API] Saving valuation for user {user_id[:8]}...")
+    
+    # Validate required fields
+    title = data.get("title")
+    parsed_car = data.get("parsed_car")
+    valuation_result = data.get("valuation_result")
+    
+    if not title or not parsed_car or not valuation_result:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400, 
+            detail="Missing required fields: title, parsed_car, valuation_result"
+        )
+    
+    try:
+        saved = save_valuation(
+            user_id=user_id,
+            title=title,
+            parsed_car=parsed_car,
+            valuation_result=valuation_result
+        )
+        
+        logger.info(f"[API] Valuation saved with ID {saved.id[:8]}...")
+        
+        return {
+            "success": True,
+            "valuation": saved.model_dump()
+        }
+        
+    except Exception as e:
+        logger.error(f"[API] Failed to save valuation: {e}")
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Failed to save valuation: {str(e)}")
+
+
+@app.delete("/valuations/{valuation_id}")
+async def delete_valuation(
+    valuation_id: str,
+    user: dict = Depends(require_auth_dependency)
+):
+    """
+    Delete a saved valuation.
+    User can only delete their own valuations (enforced by RLS).
+    """
+    user_id = user["id"]
+    logger.info(f"[API] Deleting valuation {valuation_id[:8]} for user {user_id[:8]}...")
+    
+    deleted = delete_saved_valuation(valuation_id, user_id)
+    
+    if not deleted:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Valuation not found or not owned by user")
+    
+    return {
+        "success": True,
+        "message": "Valuation deleted successfully"
+    }

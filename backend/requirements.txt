@@ -5,3 +5,4 @@ openai>=1.55.0
 supabase>=2.10.0
 langgraph>=0.2.0
 pydantic>=2.0.0
+pyjwt>=2.8.0
