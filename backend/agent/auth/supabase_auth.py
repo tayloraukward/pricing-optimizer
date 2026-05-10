@@ -104,14 +104,11 @@ def verify_jwt_with_supabase(token: str) -> Optional[Dict[str, Any]]:
     try:
         supabase = get_supabase_admin_client()
         
-        logger.info(f"[SUPABASE] Verifying token with Supabase client (first 20 chars): {token[:20]}...")
-        
         # Use Supabase's get_user() to verify the token
         # This validates the token against Supabase's auth server
         response = supabase.auth.get_user(token)
         
         if response.user:
-            logger.info(f"[SUPABASE] Token verified successfully. User: {response.user.id[:8]}...")
             return {
                 "id": response.user.id,
                 "email": response.user.email,
@@ -119,7 +116,6 @@ def verify_jwt_with_supabase(token: str) -> Optional[Dict[str, Any]]:
                 "user_metadata": response.user.user_metadata,
             }
         else:
-            logger.warning("[SUPABASE] Token verification returned no user")
             return None
             
     except Exception as e:

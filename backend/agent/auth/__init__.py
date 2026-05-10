@@ -1,4 +1,3 @@
-from .jwt_utils import verify_supabase_token, get_user_from_token
 from .middleware import (
     require_auth_dependency, 
     optional_auth_dependency,
@@ -13,8 +12,6 @@ from .supabase_auth import (
 )
 
 __all__ = [
-    "verify_supabase_token",
-    "get_user_from_token", 
     "require_auth_dependency",
     "optional_auth_dependency",
     "get_bearer_token_from_request",
