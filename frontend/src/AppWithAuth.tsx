@@ -39,6 +39,7 @@ function AppWithAuth() {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const [showSavedValuations, setShowSavedValuations] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [currentValuationData, setCurrentValuationData] = useState<{
     originalDescription: string;
     parsedDetails: ParsedDetails;
@@ -58,6 +59,21 @@ function AppWithAuth() {
     window.addEventListener('show-signin', handleShowSignIn);
     return () => window.removeEventListener('show-signin', handleShowSignIn);
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.user-dropdown')) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    if (showUserDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showUserDropdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,23 +181,51 @@ function AppWithAuth() {
               
               <div className="flex items-center gap-4">
                 {user ? (
-                  <>
+                  <div className="relative user-dropdown">
                     <button
-                      onClick={() => setShowSavedValuations(true)}
-                      className="text-sm text-white/70 hover:text-white transition-colors"
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      className="text-sm text-white/70 hover:text-white transition-colors flex items-center gap-2"
                     >
-                      My Saved
-                    </button>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-white/70">{user.email}</span>
-                      <button
-                        onClick={() => signOut()}
-                        className="text-sm bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors"
+                      {user.email}
+                      <svg 
+                        className={`w-4 h-4 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
                       >
-                        Sign Out
-                      </button>
-                    </div>
-                  </>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg py-1 z-50">
+                        <button
+                          onClick={() => {
+                            setShowSavedValuations(true);
+                            setShowUserDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition-colors flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                          </svg>
+                          Saved Valuations
+                        </button>
+                        <button
+                          onClick={() => {
+                            signOut();
+                            setShowUserDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-white/80 hover:bg-white/10 transition-colors flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
+                          Sign Out
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <button
                     onClick={() => setShowSignIn(true)}

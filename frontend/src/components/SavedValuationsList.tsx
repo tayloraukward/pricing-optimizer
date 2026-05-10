@@ -17,6 +17,7 @@ interface SavedValuation {
     price_range_high: number;
     confidence: 'low' | 'medium' | 'high';
     explanation: string;
+    comparable_count: number;
   };
   created_at: string;
 }
@@ -29,6 +30,7 @@ export default function SavedValuationsList({ onSelect }: SavedValuationsListPro
   const [valuations, setValuations] = useState<SavedValuation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const { user, getAccessToken } = useAuth();
 
   const API_URL = import.meta.env.VITE_API_URL || '';
@@ -190,53 +192,141 @@ export default function SavedValuationsList({ onSelect }: SavedValuationsListPro
       {valuations.map((valuation) => (
         <div 
           key={valuation.id}
-          className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors group"
+          className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 transition-colors group"
         >
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex-1">
-              <h4 className="font-medium text-white mb-1">{valuation.title}</h4>
-              <p className="text-sm text-white/60">
-                {valuation.parsed_car.year} {valuation.parsed_car.manufacturer} {valuation.parsed_car.model}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              {onSelect && (
+          {/* Collapsible Header */}
+          <div 
+            className="p-4 cursor-pointer"
+            onClick={() => setExpandedId(expandedId === valuation.id ? null : valuation.id)}
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-white">{valuation.title}</h4>
+                  <svg 
+                    className={`w-4 h-4 text-white/50 transition-transform ${expandedId === valuation.id ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <p className="text-sm text-white/60">
+                  {valuation.parsed_car.year} {valuation.parsed_car.manufacturer} {valuation.parsed_car.model}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xl font-bold text-white">
+                  {formatPrice(valuation.valuation_result.fair_price)}
+                </span>
                 <button
-                  onClick={() => onSelect(valuation)}
-                  className="text-blue-400 hover:text-blue-300 p-1"
-                  title="View Details"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteValuation(valuation.id);
+                  }}
+                  className="text-red-400 hover:text-red-300 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Delete"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
-              )}
-              <button
-                onClick={() => deleteValuation(valuation.id)}
-                className="text-red-400 hover:text-red-300 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                title="Delete"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-3">
-              <span className="text-xl font-bold text-white">
-                {formatPrice(valuation.valuation_result.fair_price)}
-              </span>
+            <div className="flex items-center justify-between mt-3">
               <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getConfidenceColor(valuation.valuation_result.confidence)}`}>
                 {valuation.valuation_result.confidence.toUpperCase()} CONFIDENCE
               </span>
+              <span className="text-sm text-white/40">
+                {formatDate(valuation.created_at)}
+              </span>
             </div>
-            <span className="text-sm text-white/40">
-              {formatDate(valuation.created_at)}
-            </span>
           </div>
+
+          {/* Expandable Details */}
+          {expandedId === valuation.id && (
+            <div className="border-t border-white/10 p-4 bg-black/20">
+              {/* Vehicle Details */}
+              <div className="mb-4">
+                <h5 className="text-sm font-semibold text-white/80 mb-2">Vehicle Details</h5>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-white/50">Year:</span>
+                    <span className="text-white ml-2">{valuation.parsed_car.year}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/50">Make:</span>
+                    <span className="text-white ml-2">{valuation.parsed_car.manufacturer}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/50">Model:</span>
+                    <span className="text-white ml-2">{valuation.parsed_car.model}</span>
+                  </div>
+                  {valuation.parsed_car.mileage && (
+                    <div>
+                      <span className="text-white/50">Mileage:</span>
+                      <span className="text-white ml-2">{valuation.parsed_car.mileage.toLocaleString()} mi</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Valuation Details */}
+              <div className="mb-4">
+                <h5 className="text-sm font-semibold text-white/80 mb-2">Valuation Details</h5>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Fair Price:</span>
+                    <span className="text-white font-medium">{formatPrice(valuation.valuation_result.fair_price)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/50">Price Range:</span>
+                    <span className="text-white">
+                      {formatPrice(valuation.valuation_result.price_range_low)} - {formatPrice(valuation.valuation_result.price_range_high)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Full Explanation */}
+              <div>
+                <h5 className="text-sm font-semibold text-white/80 mb-2">Valuation Explanation</h5>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  {valuation.valuation_result.explanation}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-4 pt-4 border-t border-white/10 flex gap-2">
+                {onSelect && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(valuation);
+                    }}
+                    className="flex-1 text-sm bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View Details
+                  </button>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedId(null);
+                  }}
+                  className="flex-1 text-sm bg-white/10 hover:bg-white/20 text-white py-2 px-3 rounded-lg transition-colors"
+                >
+                  Collapse
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
