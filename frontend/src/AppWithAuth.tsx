@@ -47,6 +47,11 @@ function AppWithAuth() {
 
   const { user, signOut, getAccessToken } = useAuth();
 
+  // Debug user state
+  useEffect(() => {
+    console.log('👤 AppWithAuth: User state changed:', user ? `Logged in as ${user.email}` : 'Not logged in');
+  }, [user]);
+
   // Listen for show-signin event from SaveValuationButton
   useEffect(() => {
     const handleShowSignIn = () => setShowSignIn(true);
@@ -83,7 +88,8 @@ function AppWithAuth() {
     };
 
     eventSource.onerror = () => {
-      console.error('Event stream error');
+      console.error(`Event stream error ${console.error()};
+      }`);
       eventSource.close();
     };
 

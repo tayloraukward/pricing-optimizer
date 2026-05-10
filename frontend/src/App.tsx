@@ -52,7 +52,7 @@ function App() {
     };
 
     eventSource.onerror = () => {
-      console.error('Event stream error');
+      console.error(`Event stream error ${console.error()}`);
       eventSource.close();
     };
 

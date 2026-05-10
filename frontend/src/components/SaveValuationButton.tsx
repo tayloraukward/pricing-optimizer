@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface SaveValuationButtonProps {
@@ -20,8 +20,16 @@ export default function SaveValuationButton({
   
   const { user, getAccessToken } = useAuth();
 
+  // Debug user state
+  useEffect(() => {
+    console.log('💾 SaveValuationButton: User state:', user ? `Logged in as ${user.email}` : 'Not logged in');
+  }, [user]);
+
   const handleSaveClick = () => {
+    console.log('💾 SaveValuationButton: Save clicked, user:', user ? 'authenticated' : 'not authenticated');
+    
     if (!user) {
+      console.log('💾 SaveValuationButton: Showing sign-in prompt');
       setShowSignIn(true);
       return;
     }
@@ -47,6 +55,10 @@ export default function SaveValuationButton({
     try {
       const API_URL = import.meta.env.VITE_API_URL || '';
       const token = getAccessToken();
+      
+      console.log('💾 SaveValuationButton: API_URL:', API_URL);
+      console.log('💾 SaveValuationButton: Token exists:', !!token);
+      console.log('💾 SaveValuationButton: Saving data:', { title: title.trim(), parsedDetails, valuationResult });
       
       const response = await fetch(`${API_URL}/valuations/save`, {
         method: 'POST',

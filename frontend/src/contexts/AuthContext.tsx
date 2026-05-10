@@ -22,40 +22,32 @@ interface AuthContextType {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Create Supabase client ONCE at module level (outside component)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// Log only once when module loads (not on every render)
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing Supabase environment variables!');
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
+
 // Provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Create Supabase client
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true
-    }
-  });
-
   // Initialize auth state
   useEffect(() => {
-    // Check for OAuth callback
-    const hash = window.location.hash;
-    const query = window.location.search;
-    
-    if (hash.includes('access_token') || query.includes('code=')) {
-      console.log('OAuth callback detected, processing...');
-      // Supabase client with detectSessionInUrl will automatically handle this
-      // Wait a moment for Supabase to process the session
-      setTimeout(() => {
-        // Clear the URL hash/query to clean up the URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }, 500);
-    }
-    
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ? {
@@ -66,7 +58,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: Session | null) => {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: Session | null) => {
       setSession(session);
       setUser(session?.user ? {
         id: session.user.id,
@@ -75,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } : null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Email/Password sign in
