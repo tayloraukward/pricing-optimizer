@@ -58,6 +58,32 @@ export default function SaveValuationButton({
       
       console.log('💾 SaveValuationButton: API_URL:', API_URL);
       console.log('💾 SaveValuationButton: Token exists:', !!token);
+      
+      // Debug token details
+      if (token) {
+        console.log('💾 SaveValuationButton: Token (first 50 chars):', token.substring(0, 50) + '...');
+        console.log('💾 SaveValuationButton: Token length:', token.length);
+        
+        // Decode and log token payload
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          const payload = JSON.parse(jsonPayload);
+          console.log('💾 SaveValuationButton: Token payload:', {
+            sub: payload.sub,
+            email: payload.email,
+            exp: payload.exp ? new Date(payload.exp * 1000).toISOString() : 'N/A',
+            role: payload.role,
+            aud: payload.aud
+          });
+        } catch (e) {
+          console.error('💾 SaveValuationButton: Failed to decode token:', e);
+        }
+      }
+      
       console.log('💾 SaveValuationButton: Saving data:', { title: title.trim(), parsedDetails, valuationResult });
       
       const response = await fetch(`${API_URL}/valuations/save`, {
@@ -73,11 +99,14 @@ export default function SaveValuationButton({
         })
       });
 
+      console.log('💾 SaveValuationButton: Response status:', response.status);
+      
       if (response.ok) {
         setShowTitleDialog(false);
         onSaveSuccess?.();
       } else {
         const data = await response.json();
+        console.error('💾 SaveValuationButton: Error response:', data);
         setError(data.detail || 'Failed to save valuation');
       }
     } catch (err) {

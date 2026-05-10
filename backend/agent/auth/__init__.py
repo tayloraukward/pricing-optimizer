@@ -5,7 +5,12 @@ from .middleware import (
     get_bearer_token_from_request,
     security
 )
-from .supabase_auth import get_supabase_admin_client, get_user_by_id, list_users
+from .supabase_auth import (
+    get_supabase_admin_client, 
+    get_user_by_id, 
+    list_users,
+    verify_jwt_with_supabase
+)
 
 __all__ = [
     "verify_supabase_token",
@@ -17,4 +22,5 @@ __all__ = [
     "get_supabase_admin_client",
     "get_user_by_id",
     "list_users",
+    "verify_jwt_with_supabase",
 ]
