@@ -6,8 +6,8 @@ from supabase import create_client
 from tqdm import tqdm
 
 # Configuration
-SUPABASE_URL = "https://kzearkcqdlrkxdjgdmoc.supabase.co"
-SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6ZWFya2NxZGxya3hkamdkbW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNzEwNDUsImV4cCI6MjA5MTk0NzA0NX0.U1ET54nCBIMy3Dh9KJr7zNp7Usb7H1igzOSw9wL4QJU"
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://kzearkcqdlrkxdjgdmoc.supabase.co")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6ZWFya2NxZGxya3hkamdkbW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNzEwNDUsImV4cCI6MjA5MTk0NzA0NX0.U1ET54nCBIMy3Dh9KJr7zNp7Usb7H1igzOSw9wL4QJU")
 CSV_PATH = "/Users/tayloraukward/Downloads/vehicles.csv"
 TABLE_NAME = "cars"  # Adjust if your table name differs
 BATCH_SIZE = 1000  # Insert in batches to avoid rate limits
