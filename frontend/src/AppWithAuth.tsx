@@ -240,6 +240,14 @@ function AppWithAuth() {
         </header>
 
         <main className="container mx-auto px-6 py-12">
+          <div className="max-w-2xl mx-auto mb-8 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-6 py-5 text-center backdrop-blur-sm">
+            <p className="text-sm font-mono uppercase tracking-widest text-amber-300 mb-2">
+              Temporary Outage
+            </p>
+            <p className="text-white/85 leading-relaxed">
+              The site is currently down while I'm migrating database providers. Expect to be back online before end of week 06/20/2026.
+            </p>
+          </div>
           <div className="max-w-2xl mx-auto">
             {/* Hero Section */}
             <div className="text-center mb-8">
